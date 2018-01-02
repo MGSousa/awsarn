@@ -4,6 +4,7 @@ package arn
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -13,28 +14,7 @@ import (
 //arn:partition:service:region:account-id:resourcetype/resource
 //arn:partition:service:region:account-id:resourcetype:resource
 
-var KnownRegions = []string{
-	"us-west-1",
-	"ap-southeast-2",
-	"us-east-2",
-	"ap-northeast-1",
-	"ap-northeast-2",
-	"ap-south-1",
-	"ap-southeast-1",
-	"eu-central-1",
-	"eu-west-1",
-	"us-east-1",
-	"sa-east-1",
-	"us-gov-east-1",
-	"us-west-2",
-	"eu-west-2",
-	"ca-central-1",
-	"eu-west-3",
-	"us-gov-west-1",
-	"cn-north-1",
-	"cn-northwest-1",
-}
-
+// ARN is a struct representing structure of an ARN.
 type ARN struct {
 	Partition    string
 	Service      string
@@ -45,8 +25,12 @@ type ARN struct {
 	Resource     string
 }
 
-func Parse(arn string) (ARN, error) {
-	if !Valid(arn) {
+// Parse validates an ARN string and returns an ARN type.
+// An http.Client can be provided to validate the region against the latest regions queries from an AWS endpoint.
+// To disable this HTTP request pass nil as the client and the region will be
+// validated against a static set of well known AWS regions.
+func Parse(arn string, client *http.Client) (ARN, error) {
+	if !Valid(arn, client) {
 		return ARN{}, errors.New("ARN not valid")
 	}
 	parts := strings.SplitN(arn, ":", 6)
@@ -72,6 +56,7 @@ func Parse(arn string) (ARN, error) {
 	return a, nil
 }
 
+// String returns the AWS standard string representation of an ARN type.
 func (a *ARN) String() string {
 	r := a.Resource
 	if a.resourceSep != "" {
@@ -86,7 +71,11 @@ func (a *ARN) String() string {
 	)
 }
 
-func Valid(arn string) bool {
+// Valid checks the format and content of the ARN string are valid.
+// The http.Client is required to check the region in the ARN is valid against an authoritative AWS data source.
+// To disable the HTTP check for the region pass nil as the client and the region will be checked against
+// a static set of well known AWS regions only.
+func Valid(arn string, client *http.Client) bool {
 	if strings.Contains(strings.SplitN(arn, "/", 2)[0], " ") {
 		return false
 	}
@@ -103,7 +92,7 @@ func Valid(arn string) bool {
 		return false
 	}
 	// 4th valid region or null or *
-	if !ValidRegion(parts[3]) && parts[3] != "" && parts[3] != "*" {
+	if !ValidRegion(parts[3], client) && parts[3] != "" && parts[3] != "*" {
 		return false
 	}
 	// 5th account number (12 digit) or null or *
@@ -116,15 +105,12 @@ func Valid(arn string) bool {
 	return strings.HasPrefix(arn, "arn:")
 }
 
-func ValidRegion(region string) bool {
-	// Check the static list of regions first for performance
-	for _, r := range KnownRegions {
-		if region == r {
-			return true
-		}
-	}
-	// If we have not returned yet this may be a new region so check with the AWS ip-ranges.json online
-	regions, err := AWSRegions()
+// ValidRegion checks the region is a valid AWS region.
+// The http.Client is required to check the region against an authoritative AWS data source.
+// To disable the HTTP check for the region pass nil as the client and the region will be checked against
+// a static set of well known AWS regions only.
+func ValidRegion(region string, client *http.Client) bool {
+	regions, err := AWSRegions(client)
 	if err != nil {
 		return false
 	}

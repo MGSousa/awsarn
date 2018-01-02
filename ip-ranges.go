@@ -13,6 +13,7 @@ const (
 	TimeFormat  = "2006-01-02-15-04-05" //"2017-12-21-20-12-10" Jan 2 15:04:05 2006 MST
 )
 
+// AWSIPRanges represents the AWS ip-ranges.json document.
 type AWSIPRanges struct {
 	SyncToken     string `json:"syncToken"`
 	CreateDateStr string `json:"createDate"`
@@ -33,17 +34,19 @@ type AWSIPRanges struct {
 	} `json:"ipv6_prefixes"`
 }
 
-func AWSIPRangeDoc() (awsip AWSIPRanges, err error) {
+// AWSIPRangesDoc reads the ip-ranges.json document from https://ip-ranges.amazonaws.com/ip-ranges.json
+// and returns an AWSIPRanges type.
+func AWSIPRangesDoc(client *http.Client) (awsip AWSIPRanges, err error) {
 	req, e := http.NewRequest("GET", IPRangesURL, nil)
 	if e != nil {
 		err = e
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
-	var HTTPClient = &http.Client{
-		Timeout: time.Second * 10,
+	if client.Timeout == 0 {
+		client.Timeout = time.Second * 10
 	}
-	response, e := HTTPClient.Do(req)
+	response, e := client.Do(req)
 	if e != nil {
 		err = e
 		return
@@ -71,8 +74,35 @@ func AWSIPRangeDoc() (awsip AWSIPRanges, err error) {
 	return
 }
 
-func AWSRegions() ([]string, error) {
-	awsip, err := AWSIPRangeDoc()
+// AWSRegions returns a slice of valid AWS region names.
+// If the nil is passed for the client then a static list of well known regions is returned
+// rather than making an HTTP request.
+func AWSRegions(client *http.Client) ([]string, error) {
+	if client == nil {
+		return []string{
+			"GLOBAL",
+			"us-west-1",
+			"ap-southeast-2",
+			"us-east-2",
+			"ap-northeast-1",
+			"ap-northeast-2",
+			"ap-south-1",
+			"ap-southeast-1",
+			"eu-central-1",
+			"eu-west-1",
+			"us-east-1",
+			"sa-east-1",
+			"us-gov-east-1",
+			"us-west-2",
+			"eu-west-2",
+			"ca-central-1",
+			"eu-west-3",
+			"us-gov-west-1",
+			"cn-north-1",
+			"cn-northwest-1",
+		}, nil
+	}
+	awsip, err := AWSIPRangesDoc(client)
 	if err != nil {
 		return []string{}, err
 	}

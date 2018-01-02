@@ -3,12 +3,13 @@ package arn
 import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"net/http"
 	"sort"
 	"testing"
 )
 
 func TestAWSIPRangeDoc(t *testing.T) {
-	d, err := AWSIPRangeDoc()
+	d, err := AWSIPRangesDoc(http.DefaultClient)
 	if err != nil {
 		t.Fatalf("error getting IP ranges document: %v", err)
 	}
@@ -40,7 +41,7 @@ func TestAWSRegions(t *testing.T) {
 		"cn-north-1",
 		"cn-northwest-1",
 	}
-	r, err := AWSRegions()
+	r, err := AWSRegions(http.DefaultClient)
 	if err != nil {
 		t.Fatalf("error getting regions: %v", err)
 	}

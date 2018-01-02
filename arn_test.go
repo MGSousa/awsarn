@@ -196,16 +196,16 @@ var invalidARNs = []string{
 
 func TestValid(t *testing.T) {
 	for i, a := range validARNs {
-		assert.True(t, Valid(a), fmt.Sprintf("Valid ARN failed test: %d - %s", i, a))
+		assert.True(t, Valid(a, nil), fmt.Sprintf("Valid ARN failed test: %d - %s", i, a))
 	}
 	for i, a := range invalidARNs {
-		assert.False(t, Valid(a), fmt.Sprintf("Invalid ARN failed test: %d - %s", i, a))
+		assert.False(t, Valid(a, nil), fmt.Sprintf("Invalid ARN failed test: %d - %s", i, a))
 	}
 }
 
 func TestParse(t *testing.T) {
 	arn := "arn:aws:ec2:us-east-1:123456789012:volume/vol-1a2b3c4d"
-	a, err := Parse(arn)
+	a, err := Parse(arn, nil)
 	if err != nil {
 		t.Fatalf("Error parsing arn")
 	}
@@ -219,7 +219,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, arn, a.String(), "String form of ARN not as expected")
 
 	arn = "arn:aws:rds:us-east-1:123456789012:snapshot:my-snapshot2"
-	a, err = Parse(arn)
+	a, err = Parse(arn, nil)
 	if err != nil {
 		t.Fatalf("Error parsing arn")
 	}
@@ -233,7 +233,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, arn, a.String(), "String form of ARN not as expected")
 
 	arn = "arn:aws:s3:::my_corporate_bucket"
-	a, err = Parse(arn)
+	a, err = Parse(arn, nil)
 	if err != nil {
 		t.Fatalf("Error parsing arn")
 	}
