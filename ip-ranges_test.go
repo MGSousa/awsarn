@@ -1,4 +1,4 @@
-package arn
+package awsarn
 
 import (
 	"github.com/google/go-cmp/cmp"

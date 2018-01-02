@@ -1,5 +1,5 @@
 // Package arn provides utilities for manipulating Amazon Resource Names: http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
-package arn
+package awsarn
 
 import (
 	"errors"

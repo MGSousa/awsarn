@@ -1,4 +1,4 @@
-package arn
+package awsarn
 
 import (
 	"encoding/json"
