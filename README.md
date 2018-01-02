@@ -26,12 +26,15 @@ import "github.com/jcmturner/awsarn"
 arnStr := "arn:aws:iam::012345678912:user/testuser"
 arn, err := awsarn.Parse(arnStr, http.DefaultClient)
 
-fmt.Printf(`Partition: %s\n
-Service %s\n
-Region %s\n
-AccountID %s\n
-ResourceType %s\n
-Resource %s\n`,
+fmt.Printf(
+`Partition: %s
+Service %s
+Region %s
+AccountID %s
+ResourceType %s
+Resource %s
+`,
+        arn.Partition,
         arn.Service,
         arn.Region,
         arn.AccountID,
