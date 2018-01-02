@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	IPRangesURL = "https://ip-ranges.amazonaws.com/ip-ranges.json"
-	TimeFormat  = "2006-01-02-15-04-05" //"2017-12-21-20-12-10" Jan 2 15:04:05 2006 MST
+	ipRangesURL = "https://ip-ranges.amazonaws.com/ip-ranges.json"
+	timeFormat  = "2006-01-02-15-04-05" //"2017-12-21-20-12-10" Jan 2 15:04:05 2006 MST
 )
 
 // AWSIPRanges represents the AWS ip-ranges.json document.
@@ -37,7 +37,7 @@ type AWSIPRanges struct {
 // AWSIPRangesDoc reads the ip-ranges.json document from https://ip-ranges.amazonaws.com/ip-ranges.json
 // and returns an AWSIPRanges type.
 func AWSIPRangesDoc(client *http.Client) (awsip AWSIPRanges, err error) {
-	req, e := http.NewRequest("GET", IPRangesURL, nil)
+	req, e := http.NewRequest("GET", ipRangesURL, nil)
 	if e != nil {
 		err = e
 		return
@@ -61,7 +61,7 @@ func AWSIPRangesDoc(client *http.Client) (awsip AWSIPRanges, err error) {
 	if err != nil {
 		return
 	}
-	awsip.CreateDate, err = time.Parse(TimeFormat, awsip.CreateDateStr)
+	awsip.CreateDate, err = time.Parse(timeFormat, awsip.CreateDateStr)
 	if err != nil {
 		return
 	}
