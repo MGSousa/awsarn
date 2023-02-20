@@ -18,13 +18,15 @@ type AWSIPRanges struct {
 	SyncToken     string `json:"syncToken"`
 	CreateDateStr string `json:"createDate"`
 	CreateDate    time.Time
-	Prefixes      []struct {
+
+	Prefixes []struct {
 		IPPrefix string `json:"ip_prefix"`
 		IP       net.IP
 		Network  *net.IPNet
 		Region   string `json:"region"`
 		Service  string `json:"service"`
 	} `json:"prefixes"`
+
 	Ipv6Prefixes []struct {
 		Ipv6Prefix string `json:"ipv6_prefix"`
 		IP         net.IP
@@ -37,30 +39,29 @@ type AWSIPRanges struct {
 // AWSIPRangesDoc reads the ip-ranges.json document from https://ip-ranges.amazonaws.com/ip-ranges.json
 // and returns an AWSIPRanges type.
 func AWSIPRangesDoc(client *http.Client) (awsip AWSIPRanges, err error) {
-	req, e := http.NewRequest("GET", ipRangesURL, nil)
-	if e != nil {
-		err = e
+	req, err := http.NewRequest("GET", ipRangesURL, nil)
+	if err != nil {
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if client.Timeout == 0 {
 		client.Timeout = time.Second * 10
 	}
-	response, e := client.Do(req)
-	if e != nil {
-		err = e
-		return
-	}
-	buf, e := ioutil.ReadAll(response.Body)
-	if e != nil {
-		err = e
-		return
-	}
-	defer response.Body.Close()
-	err = json.Unmarshal(buf, &awsip)
+	response, err := client.Do(req)
 	if err != nil {
 		return
 	}
+
+	buf, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+
+	if err = json.Unmarshal(buf, &awsip); err != nil {
+		return
+	}
+
 	awsip.CreateDate, err = time.Parse(timeFormat, awsip.CreateDateStr)
 	if err != nil {
 		return

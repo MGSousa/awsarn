@@ -10,9 +10,10 @@ import (
 	"unicode/utf8"
 )
 
-//arn:partition:service:region:account-id:resource
-//arn:partition:service:region:account-id:resourcetype/resource
-//arn:partition:service:region:account-id:resourcetype:resource
+const (
+	DELIMITER = ":"
+	MAXLENGHT = 6
+)
 
 // ARN is a struct representing structure of an ARN.
 type ARN struct {
@@ -33,17 +34,19 @@ func Parse(arn string, client *http.Client) (ARN, error) {
 	if !Valid(arn, client) {
 		return ARN{}, errors.New("ARN not valid")
 	}
-	parts := strings.SplitN(arn, ":", 6)
+	parts := strings.SplitN(arn, DELIMITER, MAXLENGHT)
+
 	a := ARN{
 		Partition: parts[1],
 		Service:   parts[2],
 		Region:    parts[3],
 		AccountID: parts[4],
 	}
-	if strings.Contains(parts[5], ":") {
-		r := strings.SplitN(parts[5], ":", 2)
+
+	if strings.Contains(parts[5], DELIMITER) {
+		r := strings.SplitN(parts[5], DELIMITER, 2)
 		a.ResourceType = r[0]
-		a.resourceSep = ":"
+		a.resourceSep = DELIMITER
 		a.Resource = r[1]
 	} else if strings.Contains(parts[5], "/") {
 		r := strings.SplitN(parts[5], "/", 2)
@@ -76,30 +79,53 @@ func (a *ARN) String() string {
 // To disable the HTTP check for the region pass nil as the client and the region will be checked against
 // a static set of well known AWS regions only.
 func Valid(arn string, client *http.Client) bool {
+	var (
+		validationErrors int
+	)
+	t := NewTerminal()
+
 	if strings.Contains(strings.SplitN(arn, "/", 2)[0], " ") {
 		return false
 	}
-	if strings.Count(arn, ":") < 5 {
-		return false
+	if strings.Count(arn, DELIMITER) < 5 {
+		fmt.Println("invalid ARN format: check syntax")
+		validationErrors++
 	}
-	parts := strings.SplitN(arn, ":", 6)
+	parts := strings.SplitN(arn, DELIMITER, MAXLENGHT)
+
 	// 2nd field must be "aws" or start "aws-"
 	if !strings.HasPrefix(parts[1], "aws-") && parts[1] != "aws" {
-		return false
+		fmt.Println(" [x] partition must be aws, aws-cn or aws-us-gov")
+		validationErrors++
 	}
-	// 3rd field must not be null
+
+	// service resource field must not be null
 	if parts[2] == "" {
-		return false
+		t.highlight(parts, 2)
+		fmt.Println(" [x] resource is not specified")
+		validationErrors++
 	}
-	// 4th valid region or null or *
+
+	// check if service region is a valid region or a null or *
 	if !ValidRegion(parts[3], client) && parts[3] != "" && parts[3] != "*" {
-		return false
+		t.highlight(parts, 3)
+		fmt.Println(" [x] region is not valid")
+		validationErrors++
 	}
-	// 5th account number (12 digit) or null or *
+
+	// check if account number is a valid (12 digit) or valid or null or *
 	if parts[4] != "" && utf8.RuneCountInString(parts[4]) != 12 && parts[4] != "*" {
-		return false
+		t.highlight(parts, 4)
+		fmt.Println(" [x] account ID number is not valid")
+		validationErrors++
 	}
-	if _, err := strconv.Atoi(parts[4]); parts[4] != "" && parts[4] != "*" && err != nil {
+	if _, err := strconv.Atoi(parts[4]); err != nil {
+		t.highlight(parts, 4)
+		fmt.Println(" [x] error on convert account ID number to int")
+		validationErrors++
+	}
+
+	if validationErrors > 0 {
 		return false
 	}
 	return strings.HasPrefix(arn, "arn:")
