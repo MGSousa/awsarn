@@ -12,6 +12,7 @@ type Terminal struct {
 	out *termenv.Output
 }
 
+// NewTerminal init a new terminal utils for sugar purposes
 func NewTerminal() *Terminal {
 	return &Terminal{
 		out: termenv.NewOutput(os.Stdout),
@@ -34,7 +35,7 @@ func (t *Terminal) highlight(arn []string, part int) bool {
 	suffix := t.out.String(strings.Join(arn[(part+1):], DELIMITER))
 
 	fmt.Println(
-		fmt.Sprintf("%s:%s:%s",
+		fmt.Sprintf("\n%s:%s:%s",
 			prefix.Foreground(t.green()),
 			s.Foreground(t.out.Color("#ffffff")).Background(t.out.Color("#FF0000")).Underline(),
 			suffix.Foreground(t.green())))

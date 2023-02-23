@@ -94,7 +94,8 @@ func Valid(arn string, client *http.Client) bool {
 	parts := strings.SplitN(arn, DELIMITER, MAXLENGHT)
 
 	// 2nd field must be "aws" or start "aws-"
-	if !strings.HasPrefix(parts[1], "aws-") && parts[1] != "aws" {
+	if parts[1] != "aws" && parts[1] != "aws-cn" && parts[1] != "aws-us-gov" {
+		t.highlight(parts, 1)
 		fmt.Println(" [x] partition must be aws, aws-cn or aws-us-gov")
 		validationErrors++
 	}
