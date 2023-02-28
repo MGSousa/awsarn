@@ -114,16 +114,18 @@ func Valid(arn string, client *http.Client) bool {
 		validationErrors++
 	}
 
-	// check if account number is a valid (12 digit) or valid or null or *
-	if parts[4] != "" && utf8.RuneCountInString(parts[4]) != 12 && parts[4] != "*" {
-		t.highlight(parts, 4)
-		fmt.Println(" [x] account ID number is not valid")
-		validationErrors++
-	}
-	if _, err := strconv.Atoi(parts[4]); err != nil {
-		t.highlight(parts, 4)
-		fmt.Println(" [x] error on convert account ID number to int")
-		validationErrors++
+	// check if account number null/empty or *
+	if parts[4] != "" && parts[4] != "*" {
+		// if not then check if is has 12 digits
+		if utf8.RuneCountInString(parts[4]) != 12 {
+			t.highlight(parts, 4)
+			fmt.Println(" [x] account ID number is not valid, needs to have 12 digits")
+			validationErrors++
+		}
+		if _, err := strconv.Atoi(parts[4]); err != nil {
+			fmt.Println(err)
+			validationErrors++
+		}
 	}
 
 	if validationErrors > 0 {

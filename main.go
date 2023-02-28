@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/MGSousa/awsarn/awsarn"
@@ -26,5 +27,6 @@ func main() {
 		log.Infoln("ARN is valid")
 		return
 	}
-	log.Fatalln("ARN is not valid")
+
+	os.Exit(1)
 }
